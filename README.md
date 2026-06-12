@@ -4,10 +4,16 @@ Rust implementation of [Agent Skills](https://agentskills.io): parse and validat
 
 ## Quick start
 
-Add the library:
+Add the library from [crates.io](https://crates.io/crates/skills-rs):
 
 ```toml
 [dependencies]
+skills-rs = "0.1"
+```
+
+For local development in this repo:
+
+```toml
 skills-rs = { path = "../skills-rs" }
 ```
 
@@ -32,7 +38,7 @@ if let Some(block) = catalog.disclosure_block(ActivationMode::default()) {
 }
 ```
 
-Run the reference host (requires `OPENAI_API_KEY` for LLM commands):
+Run the reference host:
 
 ```bash
 cargo run -p skills -- --project .
@@ -79,6 +85,8 @@ Use `default-features = false` for parse/validate/prompt only (no filesystem or 
 
 ## References
 
+- [skills-rs on crates.io](https://crates.io/crates/skills-rs)
+- [docs.rs/skills-rs](https://docs.rs/skills-rs)
 - [Agent Skills specification](https://github.com/agentskills/agentskills/blob/main/docs/specification.mdx)
 - [Client implementation guide](https://github.com/agentskills/agentskills/blob/main/docs/client-implementation/adding-skills-support.mdx)
 - [skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) (Python parity target)
