@@ -1,0 +1,65 @@
+[workspace]
+members = [".", "host"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.88"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+thiserror = "2"
+unicode-normalization = "0.1"
+walkdir = "2"
+ignore = "0.4"
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "rustls", "json"] }
+flate2 = "1"
+tar = "0.4"
+zip = "8.6"
+clap = { version = "4", features = ["derive"] }
+tempfile = "3"
+notify = "8"
+
+[package]
+name = "skills-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Agent Skills library for Rust AI applications"
+readme = "README.md"
+repository = "https://github.com/peitaosu/skills-rs"
+homepage = "https://github.com/peitaosu/skills-rs"
+documentation = "https://docs.rs/skills-rs"
+exclude = ["host/", "agentskills/"]
+
+[features]
+default = ["runtime"]
+runtime = ["dep:walkdir", "dep:ignore", "dep:reqwest", "dep:flate2", "dep:tar", "dep:zip"]
+cli = ["dep:clap", "runtime"]
+
+[[bin]]
+name = "skills-rs"
+path = "src/bin/skills-rs.rs"
+required-features = ["cli"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+unicode-normalization.workspace = true
+walkdir = { workspace = true, optional = true }
+ignore = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+flate2 = { workspace = true, optional = true }
+tar = { workspace = true, optional = true }
+zip = { workspace = true, optional = true }
+clap = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,0 +1,6 @@
+{
+  "skills": [
+    { "path": "skills/cloud-skill" },
+    { "path": "../skills/registry/remote-registry" }
+  ]
+}

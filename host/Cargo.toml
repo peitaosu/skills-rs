@@ -1,0 +1,22 @@
+[package]
+name = "skills"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bin]]
+name = "skills"
+path = "src/main.rs"
+
+[dependencies]
+skills-rs = { path = "..", features = ["runtime"] }
+clap.workspace = true
+notify.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
