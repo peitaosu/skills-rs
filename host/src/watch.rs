@@ -2,8 +2,8 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::SystemTime;
 
-use skills_rs::SkillEntry;
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use skills_rs::SkillEntry;
 
 pub struct SkillWatcher {
     mode: WatchMode,
@@ -131,8 +131,5 @@ impl NotifyWatcher {
 }
 
 fn fs_metadata(path: &std::path::Path) -> Result<SystemTime, ()> {
-    path.metadata()
-        .map_err(|_| ())?
-        .modified()
-        .map_err(|_| ())
+    path.metadata().map_err(|_| ())?.modified().map_err(|_| ())
 }

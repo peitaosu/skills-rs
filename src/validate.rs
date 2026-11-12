@@ -4,11 +4,13 @@ use std::path::Path;
 use serde_yaml::Value;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::body::validate_body_advisories;
-use crate::script::validate_scripts_advisories;
-use crate::model::{Diagnostic, Severity, SkillDocument, SkillProperties};
-use crate::parse::{find_skill_md, parse_frontmatter, parse_frontmatter_strict, read_skill_md_content};
 use crate::Result;
+use crate::body::validate_body_advisories;
+use crate::model::{Diagnostic, Severity, SkillDocument, SkillProperties};
+use crate::parse::{
+    find_skill_md, parse_frontmatter, parse_frontmatter_strict, read_skill_md_content,
+};
+use crate::script::validate_scripts_advisories;
 
 pub const MAX_SKILL_NAME_LENGTH: usize = 64;
 pub const MAX_DESCRIPTION_LENGTH: usize = 1024;
@@ -78,7 +80,10 @@ pub fn validate_advisories(skill_dir: &Path) -> Vec<String> {
     advisories
 }
 
-pub fn validate_metadata(metadata: &BTreeMap<String, Value>, skill_dir: Option<&Path>) -> Vec<String> {
+pub fn validate_metadata(
+    metadata: &BTreeMap<String, Value>,
+    skill_dir: Option<&Path>,
+) -> Vec<String> {
     validate_metadata_with_policy(metadata, skill_dir, NameValidationPolicy::SkillsRef)
 }
 
@@ -136,7 +141,12 @@ pub fn validate_lenient(document: &SkillDocument) -> Vec<Diagnostic> {
         }
 
         if let Some(name) = metadata.get("name").and_then(Value::as_str) {
-            for message in validate_name_with_policy(name, Some(&document.skill_dir), NameValidationPolicy::SkillsRef, true) {
+            for message in validate_name_with_policy(
+                name,
+                Some(&document.skill_dir),
+                NameValidationPolicy::SkillsRef,
+                true,
+            ) {
                 diagnostics.push(Diagnostic {
                     severity: Severity::Warning,
                     message,
@@ -340,12 +350,21 @@ mod tests {
 
     #[test]
     fn skills_ref_allows_unicode_names() {
-        assert!(name_has_valid_characters("技能", NameValidationPolicy::SkillsRef));
-        assert!(!name_has_valid_characters("技能", NameValidationPolicy::SpecStrict));
+        assert!(name_has_valid_characters(
+            "技能",
+            NameValidationPolicy::SkillsRef
+        ));
+        assert!(!name_has_valid_characters(
+            "技能",
+            NameValidationPolicy::SpecStrict
+        ));
     }
 
     #[test]
     fn spec_strict_allows_ascii_names() {
-        assert!(name_has_valid_characters("my-skill-2", NameValidationPolicy::SpecStrict));
+        assert!(name_has_valid_characters(
+            "my-skill-2",
+            NameValidationPolicy::SpecStrict
+        ));
     }
 }

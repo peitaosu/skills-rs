@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
+use crate::Result;
 use crate::model::{ActivatedSkill, ActivationOptions, SkillEntry, WrapStyle};
 use crate::parse::read_document;
-use crate::Result;
 
 pub struct ResourceListing {
     pub paths: Vec<PathBuf>,
@@ -161,16 +161,15 @@ pub fn resolve_under_skill_dir(skill_dir: &Path, relative: &Path) -> Result<Path
         .any(|component| matches!(component, Component::ParentDir))
     {
         return Err(crate::SkillError::Other {
-            message: format!(
-                "Path escapes skill directory: {}",
-                relative.display()
-            ),
+            message: format!("Path escapes skill directory: {}", relative.display()),
         });
     }
 
     let resolved = skill_dir.join(relative);
     let canonical = resolved.canonicalize().unwrap_or(resolved.clone());
-    let skill_dir = skill_dir.canonicalize().unwrap_or_else(|_| skill_dir.to_path_buf());
+    let skill_dir = skill_dir
+        .canonicalize()
+        .unwrap_or_else(|_| skill_dir.to_path_buf());
 
     if !canonical.starts_with(&skill_dir) {
         return Err(crate::SkillError::Other {

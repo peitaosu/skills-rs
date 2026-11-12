@@ -90,7 +90,10 @@ fn matches_any_bash_command(tokens: &[&str], command: &str) -> bool {
 }
 
 fn matches_bash_filename(token: &str, script_file_name: &str) -> bool {
-    let Some(inner) = token.strip_prefix("Bash(").and_then(|value| value.strip_suffix(')')) else {
+    let Some(inner) = token
+        .strip_prefix("Bash(")
+        .and_then(|value| value.strip_suffix(')'))
+    else {
         return false;
     };
 
@@ -106,7 +109,10 @@ fn matches_bash_filename(token: &str, script_file_name: &str) -> bool {
 }
 
 fn matches_bash_command(token: &str, command: &str) -> bool {
-    let Some(inner) = token.strip_prefix("Bash(").and_then(|value| value.strip_suffix(')')) else {
+    let Some(inner) = token
+        .strip_prefix("Bash(")
+        .and_then(|value| value.strip_suffix(')'))
+    else {
         return false;
     };
 
@@ -122,7 +128,10 @@ fn matches_bash_command(token: &str, command: &str) -> bool {
 }
 
 fn matches_read_pattern(token: &str, path: &str) -> bool {
-    let Some(inner) = token.strip_prefix("Read(").and_then(|value| value.strip_suffix(')')) else {
+    let Some(inner) = token
+        .strip_prefix("Read(")
+        .and_then(|value| value.strip_suffix(')'))
+    else {
         return false;
     };
 
@@ -161,11 +170,9 @@ fn extract_commands(content: &str) -> Vec<String> {
 }
 
 fn split_command_segments(line: &str) -> Vec<&str> {
-    line.split(|character: char| {
-        character.is_whitespace() || matches!(character, '|' | ';' | '&')
-    })
-    .filter(|segment| !segment.is_empty())
-    .collect()
+    line.split(|character: char| character.is_whitespace() || matches!(character, '|' | ';' | '&'))
+        .filter(|segment| !segment.is_empty())
+        .collect()
 }
 
 fn command_name(segment: &str) -> Option<String> {

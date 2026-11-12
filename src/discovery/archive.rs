@@ -16,17 +16,21 @@ pub fn unpack_skill_archive(bytes: &[u8], archive_name: &str, destination: &Path
     if archive_name.ends_with(".tar.gz") || archive_name.ends_with(".tgz") {
         let decoder = GzDecoder::new(Cursor::new(bytes));
         let mut archive = TarArchive::new(decoder);
-        archive.unpack(destination).map_err(|error| SkillError::Other {
-            message: format!("Failed to unpack tar.gz archive: {error}"),
-        })?;
+        archive
+            .unpack(destination)
+            .map_err(|error| SkillError::Other {
+                message: format!("Failed to unpack tar.gz archive: {error}"),
+            })?;
         return Ok(());
     }
 
     if archive_name.ends_with(".tar") {
         let mut archive = TarArchive::new(Cursor::new(bytes));
-        archive.unpack(destination).map_err(|error| SkillError::Other {
-            message: format!("Failed to unpack tar archive: {error}"),
-        })?;
+        archive
+            .unpack(destination)
+            .map_err(|error| SkillError::Other {
+                message: format!("Failed to unpack tar archive: {error}"),
+            })?;
         return Ok(());
     }
 
@@ -44,10 +48,9 @@ pub fn unpack_skill_archive(bytes: &[u8], archive_name: &str, destination: &Path
 
 fn unpack_zip(bytes: &[u8], destination: &Path) -> Result<()> {
     let reader = Cursor::new(bytes);
-    let mut archive =
-        zip::ZipArchive::new(reader).map_err(|error| SkillError::Other {
-            message: format!("Failed to open zip archive: {error}"),
-        })?;
+    let mut archive = zip::ZipArchive::new(reader).map_err(|error| SkillError::Other {
+        message: format!("Failed to open zip archive: {error}"),
+    })?;
 
     for index in 0..archive.len() {
         let mut file = archive.by_index(index).map_err(|error| SkillError::Other {
@@ -59,10 +62,7 @@ fn unpack_zip(bytes: &[u8], destination: &Path) -> Result<()> {
 
         if !is_safe_relative_path(enclosed_name.as_path()) {
             return Err(SkillError::Other {
-                message: format!(
-                    "Zip entry escapes destination: {}",
-                    enclosed_name.display()
-                ),
+                message: format!("Zip entry escapes destination: {}", enclosed_name.display()),
             });
         }
 
@@ -153,7 +153,9 @@ mod tests {
         {
             let file = fs::File::create(&tar_path).unwrap();
             let mut builder = tar::Builder::new(file);
-            builder.append_dir_all("payload", dir.path().join("payload")).unwrap();
+            builder
+                .append_dir_all("payload", dir.path().join("payload"))
+                .unwrap();
             builder.finish().unwrap();
         }
 
@@ -167,7 +169,9 @@ mod tests {
             let file = fs::File::create(&tgz_path).unwrap();
             let encoder = flate2::write::GzEncoder::new(file, flate2::Compression::default());
             let mut builder = tar::Builder::new(encoder);
-            builder.append_dir_all("payload", dir.path().join("payload")).unwrap();
+            builder
+                .append_dir_all("payload", dir.path().join("payload"))
+                .unwrap();
             builder.finish().unwrap();
         }
 

@@ -11,7 +11,9 @@ pub struct GitignoreMatcher {
 
 impl GitignoreMatcher {
     pub fn from_root(source_root: &Path) -> Option<Self> {
-        let source_root = source_root.canonicalize().unwrap_or_else(|_| source_root.to_path_buf());
+        let source_root = source_root
+            .canonicalize()
+            .unwrap_or_else(|_| source_root.to_path_buf());
         let mut builder = GitignoreBuilder::new(&source_root);
         let mut loaded = false;
 

@@ -8,7 +8,7 @@ Checklist mapping [Agent Skills](https://agentskills.io) requirements to this re
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Integrators, contributors | Architecture, types, flows |
 | **SPEC.md** (this file) | Maintainers | Requirement → status → code location |
 
-**Status key:** **done** · **partial** · **missing** · **—** (host/model behavior, not library code)
+**Status key:** **done** · **partial** · **missing** · **watch** (upstream fix/proposal pending) · **—** (host/model behavior, not library code)
 
 **Code locations:**
 
@@ -23,12 +23,18 @@ Checklist mapping [Agent Skills](https://agentskills.io) requirements to this re
 
 Skill artifact definition. Target: strict parity with the [specification](agentskills/docs/specification.mdx) and [skills-ref](agentskills/skills-ref/) validator.
 
+The spec is maintained under the Linux Foundation [AAIF](https://opensource.googleblog.com/2026/11/scaling-ai-agents-open-standards-mcp-aaif.html) since 2026-11. It remains unversioned with no changelog ([agentskills#269](https://github.com/agentskills/agentskills/discussions/269)); the last normative change was 2026-08-04 ([agentskills#268](https://github.com/agentskills/agentskills/pull/268) open directory set, [agentskills#479](https://github.com/agentskills/agentskills/pull/479) `metadata` string values). Announced roadmap: versioned releases, formal proposal process, security guidance; priorities: packaging, discovery, versioning.
+
+Open proposals, not yet normative: prefixed `metadata` extension keys with a reserved top level ([agentskills#618](https://github.com/agentskills/agentskills/discussions/618)), lazy discovery of vendor-bundled skills ([agentskills#656](https://github.com/agentskills/agentskills/issues/656)), system-level skills folder ([agentskills#589](https://github.com/agentskills/agentskills/issues/589)), activation-mechanisms RFC ([agentskills#57](https://github.com/agentskills/agentskills/issues/57)), `dependencies` field ([agentskills#485](https://github.com/agentskills/agentskills/issues/485)), model targeting field ([agentskills#495](https://github.com/agentskills/agentskills/issues/495)).
+
 | Requirement | Source | Status | Implementation |
 |-------------|--------|--------|----------------|
 | Skill directory with required `SKILL.md` | Spec | done | `find_skill_md`, `validate` |
 | Accept lowercase `skill.md` | skills-ref | done | Prefers `SKILL.md` |
 | YAML frontmatter between `---` delimiters | Spec | done | `parse_frontmatter` |
+| Frontmatter ends at a `---` line, not a `---` substring | skills-ref#641 | done | Line-based scan; CRLF tolerated |
 | Markdown body after frontmatter | Spec | done | `read_document` |
+| `SKILL.md` read as UTF-8 | skills-ref#558 | done | Read as bytes; invalid UTF-8 is a `ParseError` |
 | Parse `name` (required) | Spec | done | `SkillProperties` |
 | Parse `description` (required) | Spec | done | |
 | Parse `license` (optional) | Spec | done | |
@@ -44,6 +50,7 @@ Skill artifact definition. Target: strict parity with the [specification](agents
 | Strict: reject unknown frontmatter fields | skills-ref | done | |
 | Strict: path / missing file errors | skills-ref | done | |
 | Optional dirs `scripts/`, `references/`, `assets/` | Spec | done | Listed at activation |
+| Open directory set: any files/dirs beyond `SKILL.md` | Spec | done | The three dirs are recommendations ([agentskills#268](https://github.com/agentskills/agentskills/pull/268)) |
 | Relative file references in body | Spec | done | `validate_body_advisories` |
 | Progressive disclosure authoring guidance | Spec | done | Body advisories + lenient discovery |
 | Script quality authoring guidance | Spec | done | `validate_scripts_advisories` (warnings only) |
@@ -111,6 +118,7 @@ Reusable lifecycle: discover → parse → disclose → activate → session.
 |-------------|--------|--------|----------------|
 | `<available_skills>` XML catalog | skills-ref | done | `to_prompt`, `SkillCatalog::to_prompt_xml` |
 | XML-escape name and description | skills-ref | done | |
+| XML-escape `<location>` paths | skills-ref#662 | done | `escape_xml` on the location |
 | Include `<location>` per skill | Client guide Step 3 | done | Absolute path to `SKILL.md` |
 | Behavioral instructions (file-read mode) | Client guide Step 3 | done | `ActivationMode::FileRead` |
 | Behavioral instructions (dedicated-tool mode) | Client guide Step 3 | done | `ActivationMode::DedicatedTool` |

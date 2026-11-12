@@ -160,14 +160,13 @@ fn required_string(metadata: &BTreeMap<String, Value>, field: &str) -> crate::Re
         .filter(|value| !value.is_empty())
         .map(str::to_owned)
         .ok_or_else(|| {
-            crate::ValidationError::single(format!("Field '{field}' must be a non-empty string")).into()
+            crate::ValidationError::single(format!("Field '{field}' must be a non-empty string"))
+                .into()
         })
 }
 
 fn optional_string(metadata: &BTreeMap<String, Value>, field: &str) -> Option<String> {
-    metadata
-        .get(field)
-        .and_then(yaml_scalar_to_string)
+    metadata.get(field).and_then(yaml_scalar_to_string)
 }
 
 fn parse_metadata_map(value: &Value) -> crate::Result<BTreeMap<String, String>> {

@@ -132,11 +132,11 @@ mod tests {
             "line\n".repeat(501)
         );
         let advisories = validate_body_advisories(&body, &skill_dir);
-        assert!(advisories
-            .iter()
-            .any(|message| message.contains("lines")));
-        assert!(advisories
-            .iter()
-            .any(|message| message.contains("one level deep")));
+        assert!(advisories.iter().any(|message| message.contains("lines")));
+        assert!(
+            advisories
+                .iter()
+                .any(|message| message.contains("one level deep"))
+        );
     }
 }

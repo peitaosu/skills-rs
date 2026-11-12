@@ -47,11 +47,10 @@ impl RemoteRegistrySource {
             .unwrap_or_else(|| PathBuf::from("."));
 
         let manifest_text = fs::read_to_string(manifest_path)?;
-        let manifest: RegistryManifest = serde_json::from_str(&manifest_text).map_err(|error| {
-            SkillError::Other {
+        let manifest: RegistryManifest =
+            serde_json::from_str(&manifest_text).map_err(|error| SkillError::Other {
                 message: format!("Invalid registry manifest JSON: {error}"),
-            }
-        })?;
+            })?;
 
         fs::create_dir_all(&cache_dir)?;
 
@@ -98,11 +97,10 @@ impl RemoteRegistrySource {
                 message: format!("Failed to read registry manifest body: {error}"),
             })?;
 
-        let manifest: RegistryManifest = serde_json::from_str(&manifest_text).map_err(|error| {
-            SkillError::Other {
+        let manifest: RegistryManifest =
+            serde_json::from_str(&manifest_text).map_err(|error| SkillError::Other {
                 message: format!("Invalid registry manifest JSON: {error}"),
-            }
-        })?;
+            })?;
 
         fs::create_dir_all(&cache_dir)?;
 
@@ -383,11 +381,10 @@ pub(crate) fn from_registry_url_for_test(
             message: format!("Failed to read registry manifest body: {error}"),
         })?;
 
-    let manifest: RegistryManifest = serde_json::from_str(&manifest_text).map_err(|error| {
-        SkillError::Other {
+    let manifest: RegistryManifest =
+        serde_json::from_str(&manifest_text).map_err(|error| SkillError::Other {
             message: format!("Invalid registry manifest JSON: {error}"),
-        }
-    })?;
+        })?;
 
     fs::create_dir_all(&cache_dir)?;
 
@@ -425,11 +422,10 @@ mod tests {
             .unwrap_or_else(|| PathBuf::from("."));
 
         let manifest_text = fs::read_to_string(manifest_path)?;
-        let manifest: RegistryManifest = serde_json::from_str(&manifest_text).map_err(|error| {
-            SkillError::Other {
+        let manifest: RegistryManifest =
+            serde_json::from_str(&manifest_text).map_err(|error| SkillError::Other {
                 message: format!("Invalid registry manifest JSON: {error}"),
-            }
-        })?;
+            })?;
 
         fs::create_dir_all(&cache_dir)?;
 
@@ -454,11 +450,7 @@ mod tests {
         .unwrap();
 
         let manifest_path = dir.path().join("manifest.json");
-        fs::write(
-            &manifest_path,
-            r#"{"skills":[{"path":"sample-skill"}]}"#,
-        )
-        .unwrap();
+        fs::write(&manifest_path, r#"{"skills":[{"path":"sample-skill"}]}"#).unwrap();
 
         let cache_dir = dir.path().join("cache");
         let source = from_manifest_with_client(
@@ -481,7 +473,7 @@ mod tests {
         fs::create_dir(&skill_dir).unwrap();
         fs::write(
             skill_dir.join("SKILL.md"),
-            &format!(
+            format!(
                 "---\nname: advisory-skill\ndescription: from registry\n---\n{}",
                 "line\n".repeat(501)
             ),
@@ -489,11 +481,7 @@ mod tests {
         .unwrap();
 
         let manifest_path = dir.path().join("manifest.json");
-        fs::write(
-            &manifest_path,
-            r#"{"skills":[{"path":"advisory-skill"}]}"#,
-        )
-        .unwrap();
+        fs::write(&manifest_path, r#"{"skills":[{"path":"advisory-skill"}]}"#).unwrap();
 
         let source = from_manifest_with_client(
             &manifest_path,
@@ -505,10 +493,12 @@ mod tests {
 
         let result = source.discover().unwrap();
         assert_eq!(result.entries.len(), 1);
-        assert!(result
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.message.contains("lines")));
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.message.contains("lines"))
+        );
     }
 
     #[test]
@@ -520,9 +510,8 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let skill_url = format!("http://127.0.0.1:{port}/remote-skill/SKILL.md");
-        let manifest_body = format!(
-            r#"{{"skills":[{{"url":"{skill_url}","name":"remote-skill"}}]}}"#
-        );
+        let manifest_body =
+            format!(r#"{{"skills":[{{"url":"{skill_url}","name":"remote-skill"}}]}}"#);
         let skill_body = "---\nname: remote-skill\ndescription: fetched\n---\nBody\n";
 
         thread::spawn(move || {

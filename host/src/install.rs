@@ -2,8 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use skills_rs::{
-    find_skill_md, read_properties, unpack_skill_archive, validate_with_policy,
-    NameValidationPolicy,
+    NameValidationPolicy, find_skill_md, read_properties, unpack_skill_archive,
+    validate_with_policy,
 };
 
 pub fn install_skill_directory(source: &Path, project_root: &Path) -> Result<PathBuf, String> {
@@ -17,9 +17,7 @@ pub fn install_skill_directory(source: &Path, project_root: &Path) -> Result<Pat
     }
 
     let properties = read_properties(source).map_err(|error| error.to_string())?;
-    let destination = project_root
-        .join(".agents/skills")
-        .join(&properties.name);
+    let destination = project_root.join(".agents/skills").join(&properties.name);
 
     if destination.exists() {
         return Err(format!(
@@ -33,7 +31,10 @@ pub fn install_skill_directory(source: &Path, project_root: &Path) -> Result<Pat
     Ok(destination)
 }
 
-pub fn install_skill_archive(archive_path: &Path, project_root: &Path) -> Result<Vec<PathBuf>, String> {
+pub fn install_skill_archive(
+    archive_path: &Path,
+    project_root: &Path,
+) -> Result<Vec<PathBuf>, String> {
     if !archive_path.is_file() {
         return Err(format!("not a file: {}", archive_path.display()));
     }
@@ -44,9 +45,11 @@ pub fn install_skill_archive(archive_path: &Path, project_root: &Path) -> Result
         .and_then(|name| name.to_str())
         .ok_or_else(|| "archive path has no file name".to_owned())?;
 
-    let extract_root = project_root
-        .join(".cache/archive-installs")
-        .join(format!("{}-{}", archive_name, std::process::id()));
+    let extract_root = project_root.join(".cache/archive-installs").join(format!(
+        "{}-{}",
+        archive_name,
+        std::process::id()
+    ));
     if extract_root.exists() {
         fs::remove_dir_all(&extract_root).map_err(|error| error.to_string())?;
     }
@@ -55,7 +58,10 @@ pub fn install_skill_archive(archive_path: &Path, project_root: &Path) -> Result
 
     let mut installed = Vec::new();
     for skill_md in find_skill_files(&extract_root) {
-        let skill_dir = skill_md.parent().unwrap_or(skill_md.as_path()).to_path_buf();
+        let skill_dir = skill_md
+            .parent()
+            .unwrap_or(skill_md.as_path())
+            .to_path_buf();
         installed.push(install_skill_directory(&skill_dir, project_root)?);
     }
 
@@ -104,7 +110,10 @@ pub fn install_git_repository(url: &str, project_root: &Path) -> Result<Vec<Path
 
     let mut installed = Vec::new();
     for skill_md in find_skill_files(&clone_dir) {
-        let skill_dir = skill_md.parent().unwrap_or(skill_md.as_path()).to_path_buf();
+        let skill_dir = skill_md
+            .parent()
+            .unwrap_or(skill_md.as_path())
+            .to_path_buf();
         installed.push(install_skill_directory(&skill_dir, project_root)?);
     }
 

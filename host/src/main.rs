@@ -8,11 +8,11 @@ mod watch;
 
 use std::path::PathBuf;
 
-use skills_rs::CatalogPlacement;
 use clap::Parser;
-use host::{prompt_line, trust_prompt_message, SampleHost};
+use host::{SampleHost, prompt_line, trust_prompt_message};
 use install::{install_git_repository, install_skill_archive, install_skill_directory};
 use settings::HostSettings;
+use skills_rs::CatalogPlacement;
 
 #[derive(Parser)]
 #[command(name = "skills", about = "Reference host app for skills-rs")]
@@ -105,8 +105,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "install" => {
                 let source = parts.next().unwrap_or_default();
-                match install_skill_directory(PathBuf::from(source).as_path(), &settings.project_root)
-                {
+                match install_skill_directory(
+                    PathBuf::from(source).as_path(),
+                    &settings.project_root,
+                ) {
                     Ok(destination) => {
                         host.reload()?;
                         println!("installed skill to {}", destination.display());
@@ -166,10 +168,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Err(error) = host.set_watch_reload(enabled) {
                     println!("watch error: {error}");
                 } else {
-                    println!(
-                        "watch reload {}",
-                        if enabled { "on" } else { "off" }
-                    );
+                    println!("watch reload {}", if enabled { "on" } else { "off" });
                 }
             }
             "trust" => {
@@ -237,9 +236,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn print_startup(host: &SampleHost) {
     match host.llm_model() {
         Some(model) => println!("=== llm ===\nmodel: {model}\n"),
-        None => println!(
-            "=== llm ===\n(unconfigured — set OPENAI_API_KEY for llm/subagent commands)\n"
-        ),
+        None => {
+            println!("=== llm ===\n(unconfigured — set OPENAI_API_KEY for llm/subagent commands)\n")
+        }
     }
 
     if let Some(prompt) = host.system_prompt() {

@@ -2,8 +2,8 @@ use std::env;
 use std::path::PathBuf;
 
 use skills_rs::{
-    discover_and_merge, ActivationMode, ActivationOptions, CompositeFilter, DiscoveryConfig,
-    SkillCatalog, SkillSession,
+    ActivationMode, ActivationOptions, CompositeFilter, DiscoveryConfig, SkillCatalog,
+    SkillSession, discover_and_merge,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

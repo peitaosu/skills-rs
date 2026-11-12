@@ -202,8 +202,7 @@ fn uses_third_party_python_imports(content: &str) -> bool {
 fn is_python_stdlib(module: &str) -> bool {
     matches!(
         module,
-        "os"
-            | "sys"
+        "os" | "sys"
             | "json"
             | "pathlib"
             | "re"
@@ -278,9 +277,8 @@ fn includes_helpful_errors(content: &str, language: ScriptLanguage) -> bool {
 fn handles_edge_cases(content: &str, language: ScriptLanguage) -> bool {
     match language {
         ScriptLanguage::Bash => {
-            let uses_positional_args = content.contains("$1")
-                || content.contains("\"$@\"")
-                || content.contains("$*");
+            let uses_positional_args =
+                content.contains("$1") || content.contains("\"$@\"") || content.contains("$*");
             if !uses_positional_args {
                 return true;
             }
@@ -299,8 +297,7 @@ fn handles_edge_cases(content: &str, language: ScriptLanguage) -> bool {
 
             content.contains("len(sys.argv")
                 || content.contains("argparse")
-                || content.contains("if __name__")
-                    && content.contains("ArgumentParser")
+                || content.contains("if __name__") && content.contains("ArgumentParser")
         }
         ScriptLanguage::JavaScript => {
             if !content.contains("process.argv") {
@@ -356,8 +353,16 @@ mod tests {
         .unwrap();
 
         let advisories = validate_scripts_advisories(&skill_dir);
-        assert!(advisories.iter().any(|message| message.contains("error messages")));
-        assert!(advisories.iter().any(|message| message.contains("edge cases")));
+        assert!(
+            advisories
+                .iter()
+                .any(|message| message.contains("error messages"))
+        );
+        assert!(
+            advisories
+                .iter()
+                .any(|message| message.contains("edge cases"))
+        );
     }
 
     #[test]

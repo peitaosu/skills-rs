@@ -5,19 +5,19 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use skills_rs::{
-    discover_and_merge_from, format_diagnostics, resolve_under_skill_dir, ActivationMode,
-    ActivationOptions, AllowedToolsPolicy, CompositeFilter, Diagnostic,
-    DiscoveryConfig, FilesystemDiscovery, MultiSkillSource, RemoteRegistrySource,
-    SkillCatalog, SkillEntry, SkillFilter, SkillScope, SkillSession, SkillSource, WrapStyle,
+    ActivationMode, ActivationOptions, AllowedToolsPolicy, CompositeFilter, Diagnostic,
+    DiscoveryConfig, FilesystemDiscovery, MultiSkillSource, RemoteRegistrySource, SkillCatalog,
+    SkillEntry, SkillFilter, SkillScope, SkillSession, SkillSource, WrapStyle,
+    discover_and_merge_from, format_diagnostics, resolve_under_skill_dir,
 };
 
 use crate::context::ConversationContext;
 use crate::llm::{
-    assistant_followup_payload, path_argument, string_argument, tool_result_payload,
-    user_message_payload, AgentToolCall, LlmClient,
+    AgentToolCall, LlmClient, assistant_followup_payload, path_argument, string_argument,
+    tool_result_payload, user_message_payload,
 };
 use crate::settings::HostSettings;
-use crate::subagent::{run_subagent_task, SubagentHost};
+use crate::subagent::{SubagentHost, run_subagent_task};
 use crate::watch::SkillWatcher;
 
 const MAX_AGENT_TURNS: usize = 10;
@@ -125,7 +125,9 @@ impl SampleHost {
             .entries()
             .map(|entry| entry.skill_dir.clone())
             .collect();
-        let _ = self.watcher.reset(&self.entries, self.settings.watch_reload);
+        let _ = self
+            .watcher
+            .reset(&self.entries, self.settings.watch_reload);
         Ok(())
     }
 
@@ -141,8 +143,9 @@ impl SampleHost {
     pub fn llm_select_skill(&self, message: &str) -> crate::llm::SkillSelection {
         let Some(llm) = &self.llm else {
             return crate::llm::SkillSelection {
-                message: "llm unavailable: set OPENAI_API_KEY (optional OPENAI_BASE_URL, OPENAI_MODEL)"
-                    .to_owned(),
+                message:
+                    "llm unavailable: set OPENAI_API_KEY (optional OPENAI_BASE_URL, OPENAI_MODEL)"
+                        .to_owned(),
                 skill_name: None,
             };
         };
@@ -365,11 +368,7 @@ impl SampleHost {
 
         let script_content = fs::read_to_string(&resolved).ok();
 
-        if !AllowedToolsPolicy::allows_script(
-            entry,
-            script_file_name,
-            script_content.as_deref(),
-        ) {
+        if !AllowedToolsPolicy::allows_script(entry, script_file_name, script_content.as_deref()) {
             return format!(
                 "denied by allowed-tools policy (skill allows: {})",
                 AllowedToolsPolicy::describe(entry)
@@ -454,13 +453,7 @@ impl SampleHost {
             run_script: Box::new(move |script| host_ref.run_script(&skill_name, script)),
         };
 
-        let result = run_subagent_task(
-            &entry,
-            task,
-            &host_ref.filter,
-            host_ref.llm.as_ref(),
-            host,
-        );
+        let result = run_subagent_task(&entry, task, &host_ref.filter, host_ref.llm.as_ref(), host);
 
         match result {
             Ok(result) => {

@@ -1,13 +1,11 @@
 use std::path::Path;
 
-use skills_rs::{
-    ActivationOptions, SkillEntry, SkillFilter, SkillSession, WrapStyle,
-};
+use skills_rs::{ActivationOptions, SkillEntry, SkillFilter, SkillSession, WrapStyle};
 
 use crate::context::ConversationContext;
 use crate::llm::{
-    assistant_followup_payload, path_argument, string_argument, tool_result_payload,
-    user_message_payload, AgentToolCall, LlmClient,
+    AgentToolCall, LlmClient, assistant_followup_payload, path_argument, string_argument,
+    tool_result_payload, user_message_payload,
 };
 
 pub struct SubagentResult {
@@ -70,7 +68,11 @@ pub fn run_subagent_task(
 
         if turn.tool_calls.is_empty() {
             last_assistant_message = turn.assistant_message;
-            subagent_context.push("assistant".to_owned(), last_assistant_message.clone(), false);
+            subagent_context.push(
+                "assistant".to_owned(),
+                last_assistant_message.clone(),
+                false,
+            );
             break;
         }
 
@@ -87,7 +89,11 @@ pub fn run_subagent_task(
 
     if last_assistant_message.is_empty() {
         last_assistant_message = llm.summarize(&entry.properties.name, &activated.content, task)?;
-        subagent_context.push("assistant".to_owned(), last_assistant_message.clone(), false);
+        subagent_context.push(
+            "assistant".to_owned(),
+            last_assistant_message.clone(),
+            false,
+        );
     }
 
     Ok(SubagentResult {

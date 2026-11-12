@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 
 use serde_yaml::Value;
 
+use crate::Result;
 use crate::error::ParseError;
 use crate::model::{SkillDocument, SkillProperties};
-use crate::Result;
 
 const SKILL_MD_UPPER: &str = "SKILL.md";
 const SKILL_MD_LOWER: &str = "skill.md";
@@ -33,25 +33,43 @@ fn parse_frontmatter_with_mode(
     content: &str,
     lenient: bool,
 ) -> Result<(BTreeMap<String, Value>, String)> {
-    if !content.starts_with("---") {
-        return Err(ParseError::new(
-            "SKILL.md must start with YAML frontmatter (---)".to_owned(),
-        )
-        .into());
+    let is_delimiter = |line: &str| line.trim_end() == "---";
+
+    let mut lines = content.lines();
+    match lines.next() {
+        Some(first) if is_delimiter(first) => {}
+        _ => {
+            return Err(ParseError::new(
+                "SKILL.md must start with YAML frontmatter (---)".to_owned(),
+            )
+            .into());
+        }
     }
 
-    let parts: Vec<&str> = content.splitn(3, "---").collect();
-    if parts.len() < 3 {
+    let mut frontmatter: Vec<&str> = Vec::new();
+    let mut body_lines: Option<Vec<&str>> = None;
+    for line in lines {
+        if body_lines.is_none() && is_delimiter(line) {
+            body_lines = Some(Vec::new());
+            continue;
+        }
+        match &mut body_lines {
+            Some(body) => body.push(line),
+            None => frontmatter.push(line),
+        }
+    }
+
+    let Some(body_lines) = body_lines else {
         return Err(ParseError::new(
             "SKILL.md frontmatter not properly closed with ---".to_owned(),
         )
         .into());
-    }
+    };
 
-    let frontmatter_str = parts[1];
-    let body = parts[2].trim().to_owned();
+    let frontmatter_str = frontmatter.join("\n");
+    let body = body_lines.join("\n").trim().to_owned();
 
-    let parsed = parse_yaml_mapping(frontmatter_str, lenient)?;
+    let parsed = parse_yaml_mapping(&frontmatter_str, lenient)?;
     Ok((parsed, body))
 }
 
@@ -75,9 +93,9 @@ fn parse_yaml_mapping(yaml: &str, lenient: bool) -> Result<BTreeMap<String, Valu
 }
 
 fn mapping_to_btreemap(value: Value) -> Result<BTreeMap<String, Value>> {
-    let metadata = value.as_mapping().ok_or_else(|| {
-        ParseError::new("SKILL.md frontmatter must be a YAML mapping".to_owned())
-    })?;
+    let metadata = value
+        .as_mapping()
+        .ok_or_else(|| ParseError::new("SKILL.md frontmatter must be a YAML mapping".to_owned()))?;
 
     let mut map = BTreeMap::new();
     for (key, value) in metadata {
@@ -155,13 +173,19 @@ fn repair_block_scalar_values(yaml: &str) -> String {
 }
 
 pub fn read_skill_md_content(skill_md_path: &Path) -> Result<String> {
-    fs::read_to_string(skill_md_path).map_err(Into::into)
+    let bytes = fs::read(skill_md_path)?;
+    String::from_utf8(bytes).map_err(|_| {
+        ParseError::new(format!(
+            "SKILL.md is not valid UTF-8: {}",
+            skill_md_path.display()
+        ))
+        .into()
+    })
 }
 
 pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties> {
-    let skill_md = find_skill_md(skill_dir).ok_or_else(|| {
-        ParseError::new(format!("SKILL.md not found in {}", skill_dir.display()))
-    })?;
+    let skill_md = find_skill_md(skill_dir)
+        .ok_or_else(|| ParseError::new(format!("SKILL.md not found in {}", skill_dir.display())))?;
 
     let content = read_skill_md_content(&skill_md)?;
     let (metadata, _) = parse_frontmatter(&content)?;
@@ -169,9 +193,8 @@ pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties> {
 }
 
 pub fn read_document(skill_dir: &Path) -> Result<SkillDocument> {
-    let skill_md_path = find_skill_md(skill_dir).ok_or_else(|| {
-        ParseError::new(format!("SKILL.md not found in {}", skill_dir.display()))
-    })?;
+    let skill_md_path = find_skill_md(skill_dir)
+        .ok_or_else(|| ParseError::new(format!("SKILL.md not found in {}", skill_dir.display())))?;
 
     let content = read_skill_md_content(&skill_md_path)?;
     let (metadata, body) = parse_frontmatter(&content)?;
@@ -181,7 +204,9 @@ pub fn read_document(skill_dir: &Path) -> Result<SkillDocument> {
         properties,
         body,
         skill_md_path: skill_md_path.canonicalize().unwrap_or(skill_md_path),
-        skill_dir: skill_dir.canonicalize().unwrap_or_else(|_| skill_dir.to_path_buf()),
+        skill_dir: skill_dir
+            .canonicalize()
+            .unwrap_or_else(|_| skill_dir.to_path_buf()),
     })
 }
 
@@ -201,7 +226,8 @@ mod tests {
 
     #[test]
     fn valid_frontmatter() {
-        let content = "---\nname: my-skill\ndescription: A test skill\n---\n# My Skill\n\nInstructions.\n";
+        let content =
+            "---\nname: my-skill\ndescription: A test skill\n---\n# My Skill\n\nInstructions.\n";
         let (metadata, body) = parse_frontmatter(content).unwrap();
         assert_eq!(metadata.get("name").unwrap().as_str().unwrap(), "my-skill");
         assert!(body.contains("# My Skill"));
@@ -241,5 +267,71 @@ mod tests {
             metadata.get("description").unwrap().as_str().unwrap(),
             "alpha: beta: gamma"
         );
+    }
+
+    #[test]
+    fn delimiter_inside_quoted_value() {
+        let content =
+            "---\nname: my-skill\ndescription: \"Read --- separated receipts\"\n---\nBody\n";
+        let (metadata, body) = parse_frontmatter(content).unwrap();
+        assert_eq!(
+            metadata.get("description").unwrap().as_str().unwrap(),
+            "Read --- separated receipts"
+        );
+        assert_eq!(body, "Body");
+    }
+
+    #[test]
+    fn first_line_must_be_exact_delimiter() {
+        let content = "----\nname: my-skill\ndescription: Test\n----\nBody\n";
+        assert!(parse_frontmatter(content).is_err());
+    }
+
+    #[test]
+    fn delimiter_with_trailing_whitespace_accepted() {
+        let content = "---  \nname: my-skill\ndescription: Test\n---  \nBody\n";
+        let (metadata, body) = parse_frontmatter(content).unwrap();
+        assert_eq!(metadata.get("name").unwrap().as_str().unwrap(), "my-skill");
+        assert_eq!(body, "Body");
+    }
+
+    #[test]
+    fn horizontal_rule_in_body() {
+        let content = "---\nname: my-skill\ndescription: Test\n---\nIntro\n\n---\n\nOutro\n";
+        let (metadata, body) = parse_frontmatter(content).unwrap();
+        assert_eq!(metadata.get("name").unwrap().as_str().unwrap(), "my-skill");
+        assert!(body.contains("---"));
+    }
+
+    #[test]
+    fn crlf_line_endings() {
+        let content = "---\r\nname: my-skill\r\ndescription: Test\r\n---\r\nBody\r\n";
+        let (metadata, body) = parse_frontmatter(content).unwrap();
+        assert_eq!(metadata.get("name").unwrap().as_str().unwrap(), "my-skill");
+        assert_eq!(body, "Body");
+    }
+
+    #[test]
+    fn multilingual_utf8_content() {
+        let content = "---\nname: my-skill\ndescription: Héllo wörld — 日本語\n---\nCuerpo\n";
+        let (metadata, _) = parse_frontmatter(content).unwrap();
+        assert_eq!(
+            metadata.get("description").unwrap().as_str().unwrap(),
+            "Héllo wörld — 日本語"
+        );
+    }
+
+    #[test]
+    fn invalid_utf8_reported_as_parse_error() {
+        let dir = TempDir::new().unwrap();
+        let skill_dir = dir.path().join("my-skill");
+        fs::create_dir(&skill_dir).unwrap();
+        fs::write(
+            skill_dir.join(SKILL_MD_UPPER),
+            b"---\nname: my-skill\ndescription: \xff\n---\nBody\n",
+        )
+        .unwrap();
+        let error = read_properties(&skill_dir).unwrap_err();
+        assert!(error.to_string().contains("UTF-8"));
     }
 }

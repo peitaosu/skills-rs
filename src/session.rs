@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
+use crate::Result;
 use crate::activate::SkillActivator;
 use crate::filter::SkillFilter;
 use crate::model::{ActivatedSkill, ActivationOptions, SkillEntry};
-use crate::Result;
 
 pub struct SkillSession {
     activated: HashSet<String>,
@@ -45,10 +45,7 @@ impl SkillSession {
     ) -> Result<Option<ActivatedSkill>> {
         if !filter.allow_activation(entry) {
             return Err(crate::SkillError::Other {
-                message: format!(
-                    "Activation denied for skill '{}'",
-                    entry.properties.name
-                ),
+                message: format!("Activation denied for skill '{}'", entry.properties.name),
             });
         }
 

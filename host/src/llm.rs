@@ -1,8 +1,8 @@
 use std::env;
 
-use skills_rs::SkillCatalog;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
+use skills_rs::SkillCatalog;
 
 pub struct LlmClient {
     http: HttpLlm,
@@ -36,14 +36,14 @@ pub struct AgentTurn {
 
 impl LlmClient {
     pub fn from_env() -> Result<Self, String> {
-        let api_key = env::var("OPENAI_API_KEY")
-            .map_err(|_| "OPENAI_API_KEY is not set".to_owned())?;
+        let api_key =
+            env::var("OPENAI_API_KEY").map_err(|_| "OPENAI_API_KEY is not set".to_owned())?;
         if api_key.is_empty() {
             return Err("OPENAI_API_KEY is empty".to_owned());
         }
 
-        let base_url = env::var("OPENAI_BASE_URL")
-            .unwrap_or_else(|_| "https://api.openai.com/v1".to_owned());
+        let base_url =
+            env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1".to_owned());
         let model = env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_owned());
         let client = reqwest::blocking::Client::builder()
             .https_only(true)
@@ -108,7 +108,12 @@ impl LlmClient {
         Ok(parse_agent_turn(response))
     }
 
-    pub fn summarize(&self, skill_name: &str, skill_content: &str, task: &str) -> Result<String, String> {
+    pub fn summarize(
+        &self,
+        skill_name: &str,
+        skill_content: &str,
+        task: &str,
+    ) -> Result<String, String> {
         let system = format!(
             "You are a subagent executing skill '{skill_name}'. Follow the skill instructions and produce a concise summary of work done.\n\n{skill_content}"
         );
@@ -421,10 +426,7 @@ pub fn parse_skill_selection(catalog: &SkillCatalog, response: &str) -> SkillSel
         };
     }
 
-    let normalized = trimmed
-        .trim_matches('"')
-        .trim_matches('\'')
-        .to_lowercase();
+    let normalized = trimmed.trim_matches('"').trim_matches('\'').to_lowercase();
 
     for entry in catalog.entries() {
         if entry.properties.name == normalized {
@@ -445,7 +447,10 @@ pub fn parse_skill_selection(catalog: &SkillCatalog, response: &str) -> SkillSel
 }
 
 pub fn string_argument(arguments: &Value, key: &str) -> Option<String> {
-    arguments.get(key).and_then(Value::as_str).map(str::to_owned)
+    arguments
+        .get(key)
+        .and_then(Value::as_str)
+        .map(str::to_owned)
 }
 
 pub fn path_argument(arguments: &Value, key: &str) -> Option<String> {

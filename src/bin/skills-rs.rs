@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use skills_rs::{
-    discover_and_merge, format_diagnostics, read_properties, to_prompt_from_dirs,
-    validate_advisories, validate_with_policy, DiscoveryConfig, NameValidationPolicy,
-};
 use clap::{Parser, Subcommand, ValueEnum};
+use skills_rs::{
+    DiscoveryConfig, NameValidationPolicy, discover_and_merge, format_diagnostics, read_properties,
+    to_prompt_from_dirs, validate_advisories, validate_with_policy,
+};
 
 #[derive(Parser)]
 #[command(name = "skills-rs", about = "Agent Skills reference CLI")]
@@ -227,7 +227,11 @@ fn run_discover(options: DiscoverOptions) -> Result<(), ExitCode> {
 }
 
 fn resolve_skill_dir(path: &Path) -> PathBuf {
-    if path.is_file() && path.file_name().is_some_and(|name| name.eq_ignore_ascii_case("skill.md")) {
+    if path.is_file()
+        && path
+            .file_name()
+            .is_some_and(|name| name.eq_ignore_ascii_case("skill.md"))
+    {
         path.parent()
             .map(Path::to_path_buf)
             .unwrap_or_else(|| path.to_path_buf())

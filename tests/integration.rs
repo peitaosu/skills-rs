@@ -2,12 +2,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use skills_rs::{
-    discover_and_merge, discover_and_merge_from, merge_skills, parse_frontmatter,
-    parse_frontmatter_strict, read_properties, to_prompt_from_dirs, validate,
-    validate_with_policy, ActivationMode, ActivationOptions, AllowedToolsPolicy, CatalogPlacement,
+    ActivationMode, ActivationOptions, AllowAll, AllowedToolsPolicy, CatalogPlacement,
     CompositeFilter, DiscoveryConfig, FilesystemDiscovery, HideModelDisabled, MultiSkillSource,
     NameValidationPolicy, RemoteRegistrySource, SkillActivator, SkillCatalog, SkillEntry,
-    SkillFilter, SkillScope, SkillSession, SkillSource, WrapStyle, AllowAll,
+    SkillFilter, SkillScope, SkillSession, SkillSource, WrapStyle, discover_and_merge,
+    discover_and_merge_from, merge_skills, parse_frontmatter, parse_frontmatter_strict,
+    read_properties, to_prompt_from_dirs, validate, validate_with_policy,
 };
 use tempfile::TempDir;
 
@@ -64,7 +64,11 @@ fn validate_uppercase_name_rejected() {
         &skill_dir,
         "---\nname: MySkill\ndescription: A test skill\n---\nBody\n",
     );
-    assert!(validate(&skill_dir).iter().any(|error| error.contains("lowercase")));
+    assert!(
+        validate(&skill_dir)
+            .iter()
+            .any(|error| error.contains("lowercase"))
+    );
 }
 
 #[test]
@@ -213,11 +217,7 @@ fn remote_registry_loads_local_manifest_paths() {
     );
 
     let manifest_path = dir.path().join("manifest.json");
-    fs::write(
-        &manifest_path,
-        r#"{"skills":[{"path":"registry-skill"}]}"#,
-    )
-    .unwrap();
+    fs::write(&manifest_path, r#"{"skills":[{"path":"registry-skill"}]}"#).unwrap();
 
     let source = RemoteRegistrySource::from_manifest_file(
         &manifest_path,
@@ -240,7 +240,11 @@ fn validate_i18n_russian_uppercase_rejected() {
         &skill_dir,
         "---\nname: НАВЫК\ndescription: A skill with Russian uppercase name\n---\nBody\n",
     );
-    assert!(validate(&skill_dir).iter().any(|error| error.contains("lowercase")));
+    assert!(
+        validate(&skill_dir)
+            .iter()
+            .any(|error| error.contains("lowercase"))
+    );
 }
 
 #[test]
@@ -290,7 +294,11 @@ fn validate_nfkc_normalization() {
         &skill_dir,
         &format!("---\nname: {decomposed_name}\ndescription: A test skill\n---\nBody\n"),
     );
-    assert!(validate(&skill_dir).is_empty(), "{:?}", validate(&skill_dir));
+    assert!(
+        validate(&skill_dir).is_empty(),
+        "{:?}",
+        validate(&skill_dir)
+    );
 }
 
 #[test]
@@ -344,8 +352,14 @@ fn read_properties_with_metadata() {
         "---\nname: my-skill\ndescription: A test skill\nmetadata:\n  author: Test Author\n  version: 1.0\n---\nBody\n",
     );
     let props = read_properties(&skill_dir).unwrap();
-    assert_eq!(props.metadata.get("author").map(String::as_str), Some("Test Author"));
-    assert_eq!(props.metadata.get("version").map(String::as_str), Some("1.0"));
+    assert_eq!(
+        props.metadata.get("author").map(String::as_str),
+        Some("Test Author")
+    );
+    assert_eq!(
+        props.metadata.get("version").map(String::as_str),
+        Some("1.0")
+    );
 }
 
 #[test]
@@ -357,7 +371,10 @@ fn read_properties_with_allowed_tools() {
         "---\nname: my-skill\ndescription: A test skill\nallowed-tools: Bash(jq:*) Bash(git:*)\n---\nBody\n",
     );
     let props = read_properties(&skill_dir).unwrap();
-    assert_eq!(props.allowed_tools.as_deref(), Some("Bash(jq:*) Bash(git:*)"));
+    assert_eq!(
+        props.allowed_tools.as_deref(),
+        Some("Bash(jq:*) Bash(git:*)")
+    );
 }
 
 #[test]
@@ -530,7 +547,10 @@ fn catalog_placement_blocks() {
         .tool_description_block(
             "activate_skill",
             CatalogPlacement::ToolDescription,
-            &["read_file(path: string)", "run_script(skill: string, script: string)"],
+            &[
+                "read_file(path: string)",
+                "run_script(skill: string, script: string)",
+            ],
         )
         .unwrap();
     assert!(tool_block.contains("<available_skills>"));
@@ -579,9 +599,11 @@ fn body_advisories_warn_on_spec_violations() {
 
     let advisories = skills_rs::validate_advisories(&skill_dir);
     assert!(advisories.iter().any(|message| message.contains("lines")));
-    assert!(advisories
-        .iter()
-        .any(|message| message.contains("references/MISSING.md")));
+    assert!(
+        advisories
+            .iter()
+            .any(|message| message.contains("references/MISSING.md"))
+    );
 }
 
 #[test]
@@ -601,7 +623,11 @@ fn script_advisories_warn_on_unsafe_script() {
     );
 
     let advisories = skills_rs::validate_advisories(&skill_dir);
-    assert!(advisories.iter().any(|message| message.contains("edge cases")));
+    assert!(
+        advisories
+            .iter()
+            .any(|message| message.contains("edge cases"))
+    );
 }
 
 #[test]
@@ -636,7 +662,12 @@ fn activation_strips_frontmatter_and_lists_resources() {
 
     assert!(activated.content.contains("# Instructions"));
     assert!(!activated.content.contains("name: my-skill"));
-    assert!(activated.resources.iter().any(|path| path.ends_with("run.sh")));
+    assert!(
+        activated
+            .resources
+            .iter()
+            .any(|path| path.ends_with("run.sh"))
+    );
 }
 
 #[test]
@@ -662,14 +693,18 @@ fn session_deduplicates_activation() {
         ..Default::default()
     };
 
-    assert!(session
-        .try_activate(&entry, options.clone(), &AllowAll)
-        .unwrap()
-        .is_some());
-    assert!(session
-        .try_activate(&entry, options, &AllowAll)
-        .unwrap()
-        .is_none());
+    assert!(
+        session
+            .try_activate(&entry, options.clone(), &AllowAll)
+            .unwrap()
+            .is_some()
+    );
+    assert!(
+        session
+            .try_activate(&entry, options, &AllowAll)
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[test]
@@ -700,7 +735,10 @@ fn discover_project_over_user_and_bundled() {
 
     let (entries, _, _) = discover_and_merge(config).unwrap();
     assert_eq!(entries.len(), 2);
-    let shared = entries.iter().find(|entry| entry.properties.name == "shared-skill").unwrap();
+    let shared = entries
+        .iter()
+        .find(|entry| entry.properties.name == "shared-skill")
+        .unwrap();
     assert_eq!(shared.properties.description, "project version");
 }
 
@@ -736,7 +774,6 @@ fn merge_skills_same_scope_last_wins_with_warning() {
     assert_eq!(merged[0].properties.description, "second");
     assert_eq!(warnings.len(), 1);
 }
-
 
 #[test]
 fn respect_gitignore_skips_ignored_skill() {
@@ -795,7 +832,9 @@ fn composite_filter_applies_all_filters() {
     };
 
     let filter = CompositeFilter::new(vec![
-        Box::new(skills_rs::TrustedRootsFilter::new([PathBuf::from("/other")])),
+        Box::new(skills_rs::TrustedRootsFilter::new([PathBuf::from(
+            "/other",
+        )])),
         Box::new(HideModelDisabled),
     ]);
 

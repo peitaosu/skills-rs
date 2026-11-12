@@ -1,8 +1,8 @@
 use std::collections::{BTreeSet, HashSet};
 use std::path::PathBuf;
 
-use crate::model::SkillEntry;
 use crate::SkillScope;
+use crate::model::SkillEntry;
 
 pub trait SkillFilter {
     fn include_in_catalog(&self, entry: &SkillEntry) -> bool;

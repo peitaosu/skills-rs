@@ -1,7 +1,7 @@
+mod archive;
 mod gitignore;
 mod paths;
 mod remote;
-mod archive;
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -9,9 +9,9 @@ use std::path::{Path, PathBuf};
 
 use walkdir::WalkDir;
 
+pub use archive::{resolve_skill_dir_after_unpack, unpack_skill_archive};
 pub use paths::{ancestor_directories, find_git_root, home_dir, xdg_skills_dir};
 pub use remote::{RegistryManifest, RegistrySkillRef, RemoteRegistrySource};
-pub use archive::{resolve_skill_dir_after_unpack, unpack_skill_archive};
 
 use self::gitignore::GitignoreMatcher;
 use crate::model::{CollisionWarning, Diagnostic, Severity, SkillEntry, SkillScope};
@@ -39,11 +39,12 @@ pub struct DiscoveryConfig {
 
 impl Default for DiscoveryConfig {
     fn default() -> Self {
-        let mut skip_dir_names = HashSet::from([
-            ".git".to_owned(),
-            "node_modules".to_owned(),
-        ]);
-        skip_dir_names.extend(["target", ".venv", "dist", "build"].into_iter().map(str::to_owned));
+        let mut skip_dir_names = HashSet::from([".git".to_owned(), "node_modules".to_owned()]);
+        skip_dir_names.extend(
+            ["target", ".venv", "dist", "build"]
+                .into_iter()
+                .map(str::to_owned),
+        );
 
         Self {
             project_roots: Vec::new(),
@@ -146,13 +147,8 @@ impl FilesystemDiscovery {
                     continue;
                 }
 
-                let discovered = scan_skill_root(
-                    &root,
-                    scope,
-                    &self.config,
-                    &mut visited,
-                    &mut diagnostics,
-                )?;
+                let discovered =
+                    scan_skill_root(&root, scope, &self.config, &mut visited, &mut diagnostics)?;
                 entries.extend(discovered);
             }
         }
@@ -179,10 +175,7 @@ impl FilesystemDiscovery {
             roots.push(base.join("skills"));
         }
 
-        roots
-            .into_iter()
-            .filter(|path| path.is_dir())
-            .collect()
+        roots.into_iter().filter(|path| path.is_dir()).collect()
     }
 }
 
@@ -197,7 +190,11 @@ impl SkillSource for FilesystemDiscovery {
         let scopes = [
             (SkillScope::Bundled, &self.config.bundled_roots, true),
             (SkillScope::User, &user_bases, false),
-            (SkillScope::Organization, &self.config.organization_roots, false),
+            (
+                SkillScope::Organization,
+                &self.config.organization_roots,
+                false,
+            ),
             (SkillScope::Project, &project_bases, false),
         ];
 
@@ -441,7 +438,9 @@ fn load_skill_entry(
         properties: properties.clone(),
         body,
         skill_md_path: skill_md.canonicalize().unwrap_or(skill_md.clone()),
-        skill_dir: skill_dir.canonicalize().unwrap_or_else(|_| skill_dir.to_path_buf()),
+        skill_dir: skill_dir
+            .canonicalize()
+            .unwrap_or_else(|_| skill_dir.to_path_buf()),
     };
 
     diagnostics.extend(validate_lenient(&document));
@@ -539,7 +538,11 @@ mod tests {
         let home = temp.path().join("home");
         let project = temp.path().join("project");
 
-        write_skill(&home.join(".agents/skills/shared-skill"), "shared-skill", "user version");
+        write_skill(
+            &home.join(".agents/skills/shared-skill"),
+            "shared-skill",
+            "user version",
+        );
         write_skill(
             &project.join(".agents/skills/shared-skill"),
             "shared-skill",
@@ -562,7 +565,11 @@ mod tests {
     #[test]
     fn discovers_bundled_roots() {
         let temp = TempDir::new().unwrap();
-        write_skill(&temp.path().join("builtin-skill"), "builtin-skill", "built in");
+        write_skill(
+            &temp.path().join("builtin-skill"),
+            "builtin-skill",
+            "built in",
+        );
 
         let config = DiscoveryConfig {
             bundled_roots: vec![temp.path().to_path_buf()],
@@ -595,6 +602,10 @@ mod tests {
         };
 
         let (entries, _, _) = discover_and_merge(config).unwrap();
-        assert!(entries.iter().any(|entry| entry.properties.name == "repo-skill"));
+        assert!(
+            entries
+                .iter()
+                .any(|entry| entry.properties.name == "repo-skill")
+        );
     }
 }
